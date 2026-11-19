@@ -3,96 +3,458 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MovieHub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101116">
+<title>MovieHub - Movie Library</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101116;color:white;font-family:Arial}
-header{background:#191b24;padding:18px;position:sticky;top:0}
-.logo{font-size:25px;font-weight:bold;color:#ffb52e}
-.hero{padding:35px 18px;background:linear-gradient(120deg,#393044,#101116)}
-.hero h1{font-size:30px}
-.search{padding:15px}
-input,textarea{width:100%;padding:13px;margin:7px 0;background:#252834;color:white;border:1px solid #555;border-radius:8px}
-textarea{min-height:90px}
-button{padding:12px 17px;background:#ffb52e;color:#111;border:0;border-radius:7px;font-weight:bold}
-.movies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:13px}
-.movie{background:#20212a;border-radius:10px;overflow:hidden}
-.movie img{width:100%;height:220px;object-fit:cover}
-.info{padding:11px}
-.info p{font-size:13px;color:#bbb}
-.watch{display:block;text-align:center;background:#ffb52e;color:#111;padding:11px;text-decoration:none;border-radius:7px}
-.panel{background:#20212a;padding:16px;border-radius:10px;margin:12px 0}
+body{
+ margin:0;
+ background:#101116;
+ color:#fff;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:#191b24;
+ padding:16px;
+ position:sticky;
+ top:0;
+ z-index:10;
+ border-bottom:1px solid #30313c;
+}
+.container{max-width:1100px;margin:auto}
+.logo{
+ color:#ffbd45;
+ font-size:27px;
+ font-weight:900;
+ letter-spacing:1px;
+}
+.hero{
+ padding:25px 17px;
+ background:linear-gradient(125deg,#392b48,#151620);
+}
+.hero h1{font-size:27px;margin:0 0 8px}
+.hero p{color:#ccc;margin:0}
+.search{padding:14px}
+input,textarea,select{
+ width:100%;
+ padding:13px;
+ margin:7px 0;
+ background:#252834;
+ color:#fff;
+ border:1px solid #454957;
+ border-radius:8px;
+ font-size:15px;
+}
+textarea{min-height:100px}
+button{
+ border:0;
+ padding:12px 16px;
+ border-radius:8px;
+ background:#ffbd45;
+ color:#171717;
+ font-weight:bold;
+ cursor:pointer;
+}
+.section-title{
+ margin:18px 14px 10px;
+ font-size:21px;
+ font-weight:900;
+ color:#ffbd45;
+ letter-spacing:.5px;
+}
+.movies{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px;
+ padding:12px;
+}
+.movie{
+ background:#20212a;
+ border:1px solid #292c37;
+ border-radius:9px;
+ overflow:hidden;
+ cursor:pointer;
+ min-width:0;
+ transition:transform .2s;
+}
+.movie:active{transform:scale(.97)}
+.movie img{
+ width:100%;
+ aspect-ratio:2/3;
+ object-fit:cover;
+ display:block;
+ background:#252834;
+}
+.movie h3{
+ font-size:13px;
+ line-height:1.4;
+ text-align:center;
+ margin:0;
+ padding:9px 4px;
+ overflow-wrap:anywhere;
+}
+.empty{
+ color:#aaa;
+ text-align:center;
+ padding:20px;
+ grid-column:1/-1;
+}
+.categories{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:13px;
+ padding:14px;
+}
+.category{
+ min-height:110px;
+ border-radius:13px;
+ padding:14px 8px;
+ text-align:center;
+ font-size:14px;
+ font-weight:900;
+ letter-spacing:.6px;
+ color:white;
+ background:linear-gradient(135deg,#29213b,#171923);
+ border:1px solid #7954b8;
+ box-shadow:0 4px 14px #0005;
+}
+.category .folder{
+ display:block;
+ font-size:30px;
+ margin-bottom:9px;
+}
+.category small{
+ display:block;
+ font-size:10px;
+ margin-top:5px;
+ opacity:.75;
+ font-weight:normal;
+}
+.category[data-category="Bengali"]{
+ background:linear-gradient(135deg,#38234f,#21172e);
+ border-color:#a56be0;
+ color:#e0c2ff;
+}
+.category[data-category="Bollywood"]{
+ background:linear-gradient(135deg,#4b2b1c,#241713);
+ border-color:#d88b50;
+ color:#ffd0a5;
+}
+.category[data-category="Hollywood"]{
+ background:linear-gradient(135deg,#183e56,#15212e);
+ border-color:#49a5dc;
+ color:#a5e1ff;
+}
+.category[data-category="South"]{
+ background:linear-gradient(135deg,#174a36,#14251f);
+ border-color:#42bd82;
+ color:#a2ffca;
+}
+.category[data-category="Web Series"]{
+ background:linear-gradient(135deg,#52243c,#281722);
+ border-color:#db6ba0;
+ color:#ffc0dc;
+}
+.category.active{
+ outline:2px solid #ffbd45;
+ filter:brightness(1.15);
+}
+#details{
+ position:fixed;
+ inset:0;
+ z-index:100;
+ background:#101116;
+ overflow-y:auto;
+ padding:18px;
+}
+.details-inner{
+ max-width:650px;
+ margin:auto;
+}
+.back-btn{
+ background:#393d49;
+ color:white;
+}
+.details-poster{
+ width:100%;
+ max-height:380px;
+ object-fit:contain;
+ display:block;
+ margin:18px auto;
+}
+.details-inner h2{font-size:24px}
+.details-description{
+ color:#ccc;
+ line-height:1.7;
+ white-space:pre-wrap;
+}
+.download-btn{
+ display:block;
+ text-align:center;
+ padding:16px;
+ background:#16a34a;
+ color:white;
+ text-decoration:none;
+ font-size:17px;
+ font-weight:900;
+ border-radius:9px;
+ margin:22px 0;
+}
+footer{
+ text-align:center;
+ color:#999;
+ padding:25px;
+ border-top:1px solid #292b35;
+}
 .hidden{display:none!important}
-#admin{max-width:650px;margin:auto;padding:16px}
-.muted{color:#aaa;font-size:13px}
-.status{color:#ffd27b;font-size:13px}
+#admin{
+ max-width:650px;
+ margin:auto;
+ padding:15px;
+}
+.panel{
+ background:#20212a;
+ border:1px solid #363947;
+ padding:15px;
+ border-radius:10px;
+ margin:12px 0;
+}
+.panel h3{margin-top:5px}
 .row{display:flex;gap:8px}
 .row button{flex:1}
+.secondary{background:#444957;color:white}
 .danger{background:#a93232;color:white}
-.secondary{background:#454957;color:white}
-footer{text-align:center;padding:25px;color:#999}
-@media(min-width:700px){.movies{grid-template-columns:repeat(4,1fr)}}
+.status{color:#ffcf75;font-size:13px}
+.muted{color:#aaa;font-size:13px}
+.admin-item{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:8px;
+}
+.admin-item strong{overflow-wrap:anywhere}
+.admin-actions{display:flex;gap:5px}
+.admin-actions button{padding:9px;font-size:12px}
+
+@media(min-width:650px){
+ .movies{grid-template-columns:repeat(5,minmax(0,1fr));gap:17px}
+ .categories{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .category:last-child{grid-column:auto}
+ .hero{padding:40px}
+ .hero h1{font-size:36px}
+}
+@media(min-width:900px){
+ .categories{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
 </style>
 </head>
+
 <body>
 
-<header><div class="logo">🎬 MOVIEHUB</div></header>
+<header>
+ <div class="container logo">🎬 MOVIEHUB</div>
+</header>
 
+<!-- HOME PAGE -->
 <main id="home">
-<section class="hero">
-<h1>Discover Your Next Movie</h1>
-<p>Explore movies and official viewing options.</p>
-</section>
 
-<div class="search">
-<input id="search" placeholder="🔍 Search movies...">
-</div>
+ <section class="hero">
+  <div class="container">
+   <h1>Discover Your Movies</h1>
+   <p>Explore your favourite movies and series.</p>
+  </div>
+ </section>
 
-<h2 style="padding-left:15px">Latest Movies</h2>
-<div class="movies" id="movieList">Loading...</div>
-<footer>© 2026 MovieHub</footer>
+ <div class="container">
+
+  <!-- LATEST UPLOADS AT TOP -->
+  <h2 class="section-title">🆕 LATEST UPLOADED</h2>
+  <div id="latestMovies" class="movies">
+   <p class="empty">Loading movies...</p>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search">
+   <input id="search" type="search"
+   placeholder="🔍 Search movie or series...">
+  </div>
+
+  <!-- ALL MOVIES -->
+  <h2 class="section-title" id="allHeading">
+   🎬 ALL MOVIES
+  </h2>
+
+  <div id="movieList" class="movies">
+   <p class="empty">Loading...</p>
+  </div>
+
+  <!-- CATEGORY FOLDERS AT BOTTOM -->
+  <h2 class="section-title">
+   📂 MOVIE CATEGORIES
+  </h2>
+
+  <div class="categories" id="categoryList">
+
+   <button class="category active" data-category="All">
+    <span class="folder">🎬</span>
+    ALL MOVIES
+    <small>Complete Collection</small>
+   </button>
+
+   <button class="category" data-category="Bengali">
+    <span class="folder">🎥</span>
+    BENGALI
+    <small>Bengali Movies</small>
+   </button>
+
+   <button class="category" data-category="Bollywood">
+    <span class="folder">🎞️</span>
+    BOLLYWOOD
+    <small>Hindi Movies</small>
+   </button>
+
+   <button class="category" data-category="Hollywood">
+    <span class="folder">🍿</span>
+    HOLLYWOOD
+    <small>English Movies</small>
+   </button>
+
+   <button class="category" data-category="South">
+    <span class="folder">🎬</span>
+    SOUTH
+    <small>South Indian Movies</small>
+   </button>
+
+   <button class="category" data-category="Web Series">
+    <span class="folder">📺</span>
+    WEB SERIES
+    <small>Series Collection</small>
+   </button>
+
+  </div>
+
+ </div>
+
+ <footer>© 2026 MovieHub</footer>
+
 </main>
 
+<!-- MOVIE DETAILS -->
+<section id="details" class="hidden">
+ <div class="details-inner">
+
+  <button id="backBtn" class="back-btn">← BACK</button>
+
+  <img id="detailPoster" class="details-poster" src="" alt="Poster">
+
+  <h2 id="detailTitle"></h2>
+
+  <p id="detailCategory" class="muted"></p>
+
+  <h3>Movie Description</h3>
+
+  <p id="detailDescription" class="details-description"></p>
+
+  <a id="downloadButton"
+  class="download-btn"
+  href="#"
+  target="_blank"
+  rel="noopener noreferrer">
+  ⬇ DOWNLOAD
+  </a>
+
+ </div>
+</section>
+
+<!-- ADMIN PANEL -->
 <section id="admin" class="hidden">
-<h2>🔐 Admin Login</h2>
 
-<div id="loginPanel" class="panel">
-<input id="email" type="email" placeholder="Admin Email">
-<input id="password" type="password" placeholder="Password">
-<button id="loginBtn">Login</button>
-<p id="loginStatus" class="status"></p>
-</div>
+ <h2>🔐 MOVIEHUB ADMIN</h2>
 
-<div id="dashboard" class="hidden">
-<div class="panel">
-<h2>Admin Dashboard</h2>
-<button id="logoutBtn" class="secondary">Logout</button>
-</div>
+ <div id="loginPanel" class="panel">
 
-<div class="panel">
-<h3 id="formHeading">Add New Movie</h3>
-<input id="title" placeholder="Movie Name">
-<input id="poster" type="url" placeholder="Poster Image URL">
-<textarea id="description" placeholder="Movie Description"></textarea>
-<input id="category" placeholder="Category">
-<input id="year" type="number" placeholder="Release Year">
-<input id="watchUrl" type="url" placeholder="Authorized Watch / Download URL">
+  <h3>Admin Login</h3>
 
-<div class="row">
-<button id="saveBtn">Save Movie</button>
-<button id="clearBtn" class="secondary">Clear</button>
-</div>
-<p id="saveStatus" class="status"></p>
-</div>
+  <input id="email" type="email"
+  placeholder="Admin Email">
 
-<h3>Manage Movies</h3>
-<div id="manageList"></div>
-</div>
+  <input id="password" type="password"
+  placeholder="Password">
+
+  <button id="loginBtn">LOGIN</button>
+
+  <p id="loginStatus" class="status"></p>
+
+ </div>
+
+ <div id="dashboard" class="hidden">
+
+  <div class="panel">
+   <h2>Admin Dashboard</h2>
+   <p class="muted">Manage your movie library.</p>
+   <button id="logoutBtn" class="secondary">LOGOUT</button>
+  </div>
+
+  <!-- ADD MOVIE -->
+  <div class="panel">
+
+   <h3 id="formHeading">➕ ADD NEW MOVIE</h3>
+
+   <label>Movie Name</label>
+   <input id="title" placeholder="Enter movie name">
+
+   <label>Choose Category</label>
+
+   <select id="category">
+    <option value="">Select Movie Category</option>
+    <option value="Bengali">Bengali Movies</option>
+    <option value="Bollywood">Bollywood Movies</option>
+    <option value="Hollywood">Hollywood Movies</option>
+    <option value="South">South Movies</option>
+    <option value="Web Series">Web Series</option>
+   </select>
+
+   <label>Release Year</label>
+   <input id="year" type="number" placeholder="2026">
+
+   <label>Poster Direct Image URL</label>
+   <input id="poster" type="url"
+   placeholder="https://i.ibb.co/...">
+
+   <label>Movie Description</label>
+   <textarea id="description"
+   placeholder="Write movie description"></textarea>
+
+   <label>Authorized Download URL</label>
+   <input id="watchUrl" type="url"
+   placeholder="https://...">
+
+   <div class="row">
+    <button id="saveBtn">SAVE MOVIE</button>
+    <button id="clearBtn" class="secondary">CLEAR</button>
+   </div>
+
+   <p id="saveStatus" class="status"></p>
+
+  </div>
+
+  <!-- MANAGE -->
+  <h3>📚 MANAGE MOVIES</h3>
+  <div id="manageList"></div>
+
+ </div>
 </section>
 
 <script>
+
+// ===================================
+// SUPABASE SETTINGS
+// ===================================
+
 const SUPABASE_URL =
 "https://dpoukmguisrnjeppunip.supabase.co";
 
@@ -100,269 +462,551 @@ const SUPABASE_PUBLISHABLE_KEY =
 "sb_publishable_wWaDBcJIp9UfyJxEreo1lg_ZBKj4tPL";
 
 const db = window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
+ SUPABASE_URL,
+ SUPABASE_PUBLISHABLE_KEY
 );
 
 const $ = id => document.getElementById(id);
+
+let allMovies = [];
+let selectedCategory = "All";
 let editingId = null;
 
+
+// ===================================
+// HELPERS
+// ===================================
+
 function safe(value){
-return String(value ?? "").replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",
-'"':"&quot;","'":"&#39;"
-})[c]);
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ })[c]);
 }
 
 function validUrl(value){
-try{
-const u=new URL(value);
-return u.protocol==="https:" || u.protocol==="http:";
-}catch{return false;}
+ try{
+  const u = new URL(value);
+  return u.protocol==="https:" || u.protocol==="http:";
+ }catch(e){
+  return false;
+ }
 }
+
+function getPoster(movie){
+ return validUrl(movie.poster_url || "")
+ ? movie.poster_url
+ : "https://placehold.co/400x600/252535/ffffff?text=MovieHub";
+}
+
+
+// ===================================
+// LOAD DATABASE
+// ===================================
 
 async function loadMovies(){
-const box=$("movieList");
-box.textContent="Loading movies...";
 
-const {data,error}=await db.from("movies")
-.select("*").order("created_at",{ascending:false});
+ $("latestMovies").innerHTML =
+ '<p class="empty">Loading...</p>';
 
-if(error){
-box.textContent="Unable to load movies.";
-return;
+ $("movieList").innerHTML =
+ '<p class="empty">Loading...</p>';
+
+ const {data,error} = await db
+ .from("movies")
+ .select("*")
+ .order("created_at",{ascending:false});
+
+ if(error){
+  $("latestMovies").innerHTML =
+  '<p class="empty">Could not load movies. Check Supabase connection and permissions.</p>';
+
+  $("movieList").innerHTML = "";
+  return;
+ }
+
+ allMovies = data || [];
+
+ renderLatest();
+ renderMovies();
 }
 
-renderMovies(data||[]);
+
+// ===================================
+// CREATE MOVIE CARD
+// ===================================
+
+function createMovieCard(movie){
+
+ const card = document.createElement("div");
+ card.className = "movie";
+
+ const image = document.createElement("img");
+ image.src = getPoster(movie);
+ image.alt = movie.title || "Movie";
+ image.loading = "lazy";
+
+ const name = document.createElement("h3");
+ name.textContent = movie.title || "Untitled";
+
+ card.append(image,name);
+
+ card.addEventListener("click",()=>{
+  openMovieDetails(movie);
+ });
+
+ return card;
 }
 
-function renderMovies(data){
-const q=$("search").value.toLowerCase();
-const box=$("movieList");
-box.innerHTML="";
 
-const filtered=data.filter(m=>
-`${m.title||""} ${m.category||""} ${m.description||""}`
-.toLowerCase().includes(q)
-);
+// ===================================
+// LATEST UPLOADED
+// ===================================
 
-if(!filtered.length){
-box.textContent="No movies found.";
-return;
+function renderLatest(){
+
+ const box = $("latestMovies");
+ box.innerHTML = "";
+
+ const latest = allMovies.slice(0,6);
+
+ if(!latest.length){
+  box.innerHTML =
+  '<p class="empty">No movies uploaded yet.</p>';
+  return;
+ }
+
+ latest.forEach(movie=>{
+  box.appendChild(createMovieCard(movie));
+ });
 }
 
-filtered.forEach(m=>{
-const card=document.createElement("div");
-card.className="movie";
 
-const poster=validUrl(m.poster_url||"")
-?m.poster_url
-:"https://placehold.co/400x600/252535/ffffff?text=MovieHub";
+// ===================================
+// ALL MOVIES AND CATEGORIES
+// ===================================
 
-const watch=validUrl(m.watch_url||"")
-?`<a class="watch" href="${safe(m.watch_url)}" target="_blank" rel="noopener">Watch Options</a>`
-:"<p>Viewing link unavailable</p>";
+function renderMovies(){
 
-card.innerHTML=`
-<img src="${safe(poster)}" alt="${safe(m.title)}">
-<div class="info">
-<h3>${safe(m.title)}</h3>
-<p>${safe(m.category)} • ${safe(m.release_year)}</p>
-<p>${safe(m.description)}</p>
-${watch}
-</div>`;
+ const box = $("movieList");
+ box.innerHTML = "";
 
-box.appendChild(card);
+ const query = $("search").value.trim().toLowerCase();
+
+ const filtered = allMovies.filter(movie=>{
+
+  const categoryMatch =
+  selectedCategory === "All" ||
+  (movie.category || "").toLowerCase() ===
+  selectedCategory.toLowerCase();
+
+  const searchMatch =
+  (movie.title || "").toLowerCase().includes(query);
+
+  return categoryMatch && searchMatch;
+ });
+
+ $("allHeading").textContent =
+ selectedCategory === "All"
+ ? "🎬 ALL MOVIES"
+ : "🎬 " + selectedCategory.toUpperCase() + " MOVIES";
+
+ if(!filtered.length){
+  box.innerHTML =
+  '<p class="empty">No movies found.</p>';
+  return;
+ }
+
+ filtered.forEach(movie=>{
+  box.appendChild(createMovieCard(movie));
+ });
+}
+
+
+// ===================================
+// CATEGORY BUTTONS
+// ===================================
+
+document.querySelectorAll("[data-category]")
+.forEach(button=>{
+
+ button.addEventListener("click",()=>{
+
+  selectedCategory = button.dataset.category;
+
+  document.querySelectorAll("[data-category]")
+  .forEach(b=>b.classList.remove("active"));
+
+  button.classList.add("active");
+
+  renderMovies();
+
+  $("allHeading").scrollIntoView({
+   behavior:"smooth",
+   block:"start"
+  });
+
+ });
 });
+
+$("search").addEventListener("input",renderMovies);
+
+
+// ===================================
+// MOVIE DETAILS
+// ===================================
+
+function openMovieDetails(movie){
+
+ $("detailPoster").src = getPoster(movie);
+
+ $("detailTitle").textContent =
+ movie.title || "";
+
+ $("detailCategory").textContent =
+ (movie.category || "Movie") +
+ (movie.release_year ? " • "+movie.release_year : "");
+
+ $("detailDescription").textContent =
+ movie.description || "Description not available.";
+
+ const button = $("downloadButton");
+
+ if(validUrl(movie.watch_url || "")){
+  button.href = movie.watch_url;
+  button.classList.remove("hidden");
+ }else{
+  button.removeAttribute("href");
+  button.classList.add("hidden");
+ }
+
+ $("home").classList.add("hidden");
+ $("details").classList.remove("hidden");
+
+ window.scrollTo(0,0);
 }
+
+function closeDetails(){
+
+ $("details").classList.add("hidden");
+ $("home").classList.remove("hidden");
+
+ window.scrollTo(0,0);
+}
+
+$("backBtn").addEventListener("click",closeDetails);
+
+
+// ===================================
+// ADMIN AUTHORIZATION
+// ===================================
 
 async function isAdmin(userId){
-const {data,error}=await db.from("admins")
-.select("user_id")
-.eq("user_id",userId)
-.maybeSingle();
 
-return !error && !!data;
+ const {data,error} = await db
+ .from("admins")
+ .select("user_id")
+ .eq("user_id",userId)
+ .maybeSingle();
+
+ return !error && !!data;
 }
+
+
+// ===================================
+// ADMIN LOGIN
+// ===================================
 
 async function login(){
-$("loginBtn").disabled=true;
-$("loginStatus").textContent="Checking...";
 
-const {data,error}=await db.auth.signInWithPassword({
-email:$("email").value.trim(),
-password:$("password").value
-});
+ $("loginBtn").disabled = true;
+ $("loginStatus").textContent = "Checking login...";
 
-$("loginBtn").disabled=false;
+ const {data,error} = await db.auth.signInWithPassword({
+  email:$("email").value.trim(),
+  password:$("password").value
+ });
 
-if(error){
-$("loginStatus").textContent=error.message;
-return;
+ $("loginBtn").disabled = false;
+
+ if(error){
+  $("loginStatus").textContent = error.message;
+  return;
+ }
+
+ if(!await isAdmin(data.user.id)){
+  await db.auth.signOut();
+
+  $("loginStatus").textContent =
+  "Admin permission not found.";
+
+  return;
+ }
+
+ $("loginPanel").classList.add("hidden");
+ $("dashboard").classList.remove("hidden");
+
+ await loadManage();
 }
 
-if(!await isAdmin(data.user.id)){
-await db.auth.signOut();
-$("loginStatus").textContent="Unauthorized account!";
-return;
-}
 
-$("loginPanel").classList.add("hidden");
-$("dashboard").classList.remove("hidden");
-await loadManage();
-}
+// ===================================
+// SAVE MOVIE
+// ===================================
 
 async function saveMovie(){
-const title=$("title").value.trim();
-const poster=$("poster").value.trim();
-const watch=$("watchUrl").value.trim();
 
-if(!title){
-$("saveStatus").textContent="Movie name required.";
-return;
+ const title = $("title").value.trim();
+ const category = $("category").value;
+ const poster = $("poster").value.trim();
+ const watch = $("watchUrl").value.trim();
+
+ if(!title){
+  $("saveStatus").textContent = "Movie name is required.";
+  return;
+ }
+
+ if(!category){
+  $("saveStatus").textContent = "Please select a category.";
+  return;
+ }
+
+ if(poster && !validUrl(poster)){
+  $("saveStatus").textContent = "Invalid poster URL.";
+  return;
+ }
+
+ if(watch && !validUrl(watch)){
+  $("saveStatus").textContent = "Invalid download URL.";
+  return;
+ }
+
+ const year = $("year").value.trim();
+
+ const movie = {
+  title:title,
+  category:category,
+  poster_url:poster || null,
+  description:$("description").value.trim() || null,
+  release_year:year ? Number(year) : null,
+  watch_url:watch || null
+ };
+
+ $("saveBtn").disabled = true;
+ $("saveStatus").textContent = "Saving...";
+
+ const result = editingId
+ ? await db.from("movies").update(movie).eq("id",editingId)
+ : await db.from("movies").insert(movie);
+
+ $("saveBtn").disabled = false;
+
+ if(result.error){
+  $("saveStatus").textContent = result.error.message;
+  return;
+ }
+
+ $("saveStatus").textContent = "Movie saved successfully!";
+
+ clearForm();
+
+ await loadMovies();
+ await loadManage();
 }
 
-if(poster && !validUrl(poster)){
-$("saveStatus").textContent="Invalid poster URL.";
-return;
-}
 
-if(watch && !validUrl(watch)){
-$("saveStatus").textContent="Invalid watch URL.";
-return;
-}
-
-const movie={
-title:title,
-poster_url:poster||null,
-description:$("description").value.trim()||null,
-category:$("category").value.trim()||null,
-release_year:$("year").value?Number($("year").value):null,
-watch_url:watch||null
-};
-
-const result=editingId
-?await db.from("movies").update(movie).eq("id",editingId)
-:await db.from("movies").insert(movie);
-
-if(result.error){
-$("saveStatus").textContent=result.error.message;
-return;
-}
-
-$("saveStatus").textContent="Movie saved successfully!";
-clearForm();
-await loadManage();
-await loadMovies();
-}
-
-async function loadManage(){
-const {data,error}=await db.from("movies")
-.select("id,title").order("created_at",{ascending:false});
-
-const box=$("manageList");
-box.innerHTML="";
-
-if(error){
-box.textContent=error.message;
-return;
-}
-
-if(!data.length){
-box.textContent="No movies added yet.";
-return;
-}
-
-data.forEach(m=>{
-const div=document.createElement("div");
-div.className="panel";
-const name=document.createElement("b");
-name.textContent=m.title;
-
-const edit=document.createElement("button");
-edit.textContent="Edit";
-edit.className="secondary";
-edit.onclick=()=>editMovie(m.id);
-
-const del=document.createElement("button");
-del.textContent="Delete";
-del.className="danger";
-del.onclick=()=>deleteMovie(m.id);
-
-div.append(name,document.createElement("br"),edit,del);
-box.appendChild(div);
-});
-}
+// ===================================
+// EDIT MOVIE
+// ===================================
 
 async function editMovie(id){
-const {data,error}=await db.from("movies")
-.select("*").eq("id",id).single();
 
-if(error)return alert(error.message);
+ const {data,error} = await db
+ .from("movies")
+ .select("*")
+ .eq("id",id)
+ .single();
 
-editingId=id;
-$("formHeading").textContent="Edit Movie";
-$("title").value=data.title||"";
-$("poster").value=data.poster_url||"";
-$("description").value=data.description||"";
-$("category").value=data.category||"";
-$("year").value=data.release_year||"";
-$("watchUrl").value=data.watch_url||"";
-window.scrollTo(0,0);
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ editingId = id;
+
+ $("formHeading").textContent = "✏️ EDIT MOVIE";
+
+ $("title").value = data.title || "";
+ $("category").value = data.category || "";
+ $("poster").value = data.poster_url || "";
+ $("description").value = data.description || "";
+ $("year").value = data.release_year || "";
+ $("watchUrl").value = data.watch_url || "";
+
+ window.scrollTo({top:0,behavior:"smooth"});
 }
+
+
+// ===================================
+// DELETE MOVIE
+// ===================================
 
 async function deleteMovie(id){
-if(!confirm("Delete this movie?"))return;
 
-const {error}=await db.from("movies").delete().eq("id",id);
+ if(!confirm("Are you sure you want to delete this movie?")){
+  return;
+ }
 
-if(error)return alert(error.message);
+ const {error} = await db
+ .from("movies")
+ .delete()
+ .eq("id",id);
 
-await loadManage();
-await loadMovies();
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ await loadMovies();
+ await loadManage();
 }
+
+
+// ===================================
+// ADMIN MOVIE LIST
+// ===================================
+
+async function loadManage(){
+
+ const box = $("manageList");
+ box.innerHTML = "Loading...";
+
+ const {data,error} = await db
+ .from("movies")
+ .select("id,title,category")
+ .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent = error.message;
+  return;
+ }
+
+ box.innerHTML = "";
+
+ if(!data.length){
+  box.textContent = "No movies added yet.";
+  return;
+ }
+
+ data.forEach(movie=>{
+
+  const item = document.createElement("div");
+  item.className = "panel admin-item";
+
+  const name = document.createElement("strong");
+  name.textContent =
+  movie.title + " (" + (movie.category || "") + ")";
+
+  const actions = document.createElement("div");
+  actions.className = "admin-actions";
+
+  const edit = document.createElement("button");
+  edit.textContent = "EDIT";
+  edit.className = "secondary";
+  edit.addEventListener("click",()=>editMovie(movie.id));
+
+  const del = document.createElement("button");
+  del.textContent = "DELETE";
+  del.className = "danger";
+  del.addEventListener("click",()=>deleteMovie(movie.id));
+
+  actions.append(edit,del);
+  item.append(name,actions);
+  box.appendChild(item);
+ });
+}
+
+
+// ===================================
+// CLEAR FORM
+// ===================================
 
 function clearForm(){
-editingId=null;
-$("formHeading").textContent="Add New Movie";
-["title","poster","description","category","year","watchUrl"]
-.forEach(id=>$(id).value="");
+
+ editingId = null;
+
+ $("formHeading").textContent = "➕ ADD NEW MOVIE";
+
+ [
+  "title",
+  "category",
+  "poster",
+  "description",
+  "year",
+  "watchUrl"
+ ].forEach(id=>{
+  $(id).value = "";
+ });
 }
+
+
+// ===================================
+// ADMIN LOGOUT
+// ===================================
 
 async function logout(){
-await db.auth.signOut();
-$("dashboard").classList.add("hidden");
-$("loginPanel").classList.remove("hidden");
-$("password").value="";
+
+ await db.auth.signOut();
+
+ $("dashboard").classList.add("hidden");
+ $("loginPanel").classList.remove("hidden");
+
+ $("password").value = "";
+
+ $("loginStatus").textContent = "Logged out.";
 }
+
+
+// ===================================
+// START
+// ===================================
 
 async function start(){
-if(new URLSearchParams(location.search).get("admin")!=="1"){
-await loadMovies();
-return;
+
+ const params = new URLSearchParams(location.search);
+
+ if(params.get("admin")==="1"){
+
+  $("home").classList.add("hidden");
+  $("admin").classList.remove("hidden");
+
+  const {data} = await db.auth.getUser();
+
+  if(data.user){
+
+   if(await isAdmin(data.user.id)){
+
+    $("loginPanel").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+
+    await loadManage();
+
+   }else{
+    await db.auth.signOut();
+   }
+  }
+
+ }else{
+
+  $("home").classList.remove("hidden");
+  $("admin").classList.add("hidden");
+
+  await loadMovies();
+ }
 }
 
-$("home").classList.add("hidden");
-$("admin").classList.remove("hidden");
-
-const {data}=await db.auth.getUser();
-
-if(data.user && await isAdmin(data.user.id)){
-$("loginPanel").classList.add("hidden");
-$("dashboard").classList.remove("hidden");
-await loadManage();
-}else if(data.user){
-await db.auth.signOut();
-}
-}
-
-$("search").addEventListener("input",loadMovies);
 $("loginBtn").addEventListener("click",login);
-$("saveBtn").addEventListener("click",saveMovie);
-$("clearBtn").addEventListener("click",clearForm);
-$("logoutBtn").addEventListener("click",logout);
-
-start();
-</script>
-</body>
-</html>
+$("saveBtn")
