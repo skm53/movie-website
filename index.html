@@ -9,25 +9,31 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101116;color:white;font-family:Arial}
-header{background:#1c1d26;padding:18px;position:sticky;top:0}
+header{background:#191b24;padding:18px;position:sticky;top:0}
 .logo{font-size:25px;font-weight:bold;color:#ffb52e}
-.hero{padding:30px 18px;background:linear-gradient(120deg,#373044,#101116)}
-.hero h1{font-size:29px}
-input,textarea,select{width:100%;padding:13px;margin:7px 0;background:#252631;color:white;border:1px solid #555;border-radius:7px}
-button{padding:12px 18px;background:#ffb52e;color:#111;border:0;border-radius:7px;font-weight:bold;margin:5px;cursor:pointer}
+.hero{padding:35px 18px;background:linear-gradient(120deg,#393044,#101116)}
+.hero h1{font-size:30px}
 .search{padding:15px}
+input,textarea{width:100%;padding:13px;margin:7px 0;background:#252834;color:white;border:1px solid #555;border-radius:8px}
+textarea{min-height:90px}
+button{padding:12px 17px;background:#ffb52e;color:#111;border:0;border-radius:7px;font-weight:bold}
 .movies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:13px}
 .movie{background:#20212a;border-radius:10px;overflow:hidden}
-.movie img{width:100%;height:210px;object-fit:cover}
-.info{padding:10px}
-.info h3{margin:5px 0}
+.movie img{width:100%;height:220px;object-fit:cover}
+.info{padding:11px}
 .info p{font-size:13px;color:#bbb}
-.info a{display:block;text-align:center;background:#ffb52e;color:#111;padding:10px;text-decoration:none;border-radius:6px}
-#admin{padding:18px}
-.panel{background:#20212a;padding:15px;border-radius:10px;margin:12px 0}
-.hidden{display:none}
-.small{font-size:12px;color:#aaa}
-footer{text-align:center;color:#999;padding:25px}
+.watch{display:block;text-align:center;background:#ffb52e;color:#111;padding:11px;text-decoration:none;border-radius:7px}
+.panel{background:#20212a;padding:16px;border-radius:10px;margin:12px 0}
+.hidden{display:none!important}
+#admin{max-width:650px;margin:auto;padding:16px}
+.muted{color:#aaa;font-size:13px}
+.status{color:#ffd27b;font-size:13px}
+.row{display:flex;gap:8px}
+.row button{flex:1}
+.danger{background:#a93232;color:white}
+.secondary{background:#454957;color:white}
+footer{text-align:center;padding:25px;color:#999}
+@media(min-width:700px){.movies{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
@@ -36,216 +42,325 @@ footer{text-align:center;color:#999;padding:25px}
 
 <main id="home">
 <section class="hero">
-<h1>Discover Movies</h1>
-<p>Explore your favourite movies.</p>
+<h1>Discover Your Next Movie</h1>
+<p>Explore movies and official viewing options.</p>
 </section>
+
 <div class="search">
-<input id="search" placeholder="🔍 Search movies..." oninput="showMovies()">
+<input id="search" placeholder="🔍 Search movies...">
 </div>
+
 <h2 style="padding-left:15px">Latest Movies</h2>
-<div class="movies" id="movieList"></div>
+<div class="movies" id="movieList">Loading...</div>
 <footer>© 2026 MovieHub</footer>
 </main>
 
 <section id="admin" class="hidden">
 <h2>🔐 Admin Login</h2>
-<div class="panel" id="login">
+
+<div id="loginPanel" class="panel">
 <input id="email" type="email" placeholder="Admin Email">
 <input id="password" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<p id="loginMsg" class="small"></p>
+<button id="loginBtn">Login</button>
+<p id="loginStatus" class="status"></p>
 </div>
 
 <div id="dashboard" class="hidden">
-<h2>Admin Dashboard</h2>
 <div class="panel">
-<h3 id="formTitle">Add New Movie</h3>
-<input id="title" placeholder="Movie Name">
-<input id="poster" placeholder="Poster Image URL">
-<textarea id="description" placeholder="Movie Description"></textarea>
-<input id="category" placeholder="Category (Action, Drama...)">
-<input id="year" type="number" placeholder="Release Year">
-<input id="link" placeholder="Official Watch / Download URL">
-<button onclick="saveMovie()">Save Movie</button>
-<button onclick="clearForm()">Clear</button>
-<p id="msg" class="small"></p>
+<h2>Admin Dashboard</h2>
+<button id="logoutBtn" class="secondary">Logout</button>
 </div>
+
+<div class="panel">
+<h3 id="formHeading">Add New Movie</h3>
+<input id="title" placeholder="Movie Name">
+<input id="poster" type="url" placeholder="Poster Image URL">
+<textarea id="description" placeholder="Movie Description"></textarea>
+<input id="category" placeholder="Category">
+<input id="year" type="number" placeholder="Release Year">
+<input id="watchUrl" type="url" placeholder="Authorized Watch / Download URL">
+
+<div class="row">
+<button id="saveBtn">Save Movie</button>
+<button id="clearBtn" class="secondary">Clear</button>
+</div>
+<p id="saveStatus" class="status"></p>
+</div>
+
 <h3>Manage Movies</h3>
-<div id="manage"></div>
-<button onclick="logout()">Logout</button>
+<div id="manageList"></div>
 </div>
 </section>
 
 <script>
-const SUPABASE_URL = "YOUR_PROJECT_URL";
-const SUPABASE_KEY = "YOUR_PUBLISHABLE_KEY";
+const SUPABASE_URL =
+"https://dpoukmguisrnjeppunip.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+"sb_publishable_wWaDBcJIp9UfyJxEreo1lg_ZBKj4tPL";
 
 const db = window.supabase.createClient(
- SUPABASE_URL,
- SUPABASE_KEY
+SUPABASE_URL,
+SUPABASE_PUBLISHABLE_KEY
 );
 
+const $ = id => document.getElementById(id);
 let editingId = null;
-let adminUser = null;
 
 function safe(value){
- return String(value || "").replace(/[&<>"']/g,
- c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+return String(value ?? "").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",
+'"':"&quot;","'":"&#39;"
+})[c]);
 }
 
-async function showMovies(){
- const q=document.getElementById("search").value.toLowerCase();
- const {data,error}=await db.from("movies")
- .select("*").order("created_at",{ascending:false});
+function validUrl(value){
+try{
+const u=new URL(value);
+return u.protocol==="https:" || u.protocol==="http:";
+}catch{return false;}
+}
 
- const list=document.getElementById("movieList");
- if(error){list.textContent="Could not load movies.";return;}
- list.innerHTML="";
+async function loadMovies(){
+const box=$("movieList");
+box.textContent="Loading movies...";
 
- (data||[]).filter(m=>
- (m.title+" "+(m.category||"")).toLowerCase().includes(q)
- ).forEach(m=>{
- const card=document.createElement("div");
- card.className="movie";
- card.innerHTML=`
- <img src="${safe(m.poster_url)}" alt="${safe(m.title)}">
- <div class="info">
- <h3>${safe(m.title)}</h3>
- <p>${safe(m.category)} • ${safe(m.release_year)}</p>
- <p>${safe(m.description)}</p>
- <a href="${safe(m.watch_url)}" target="_blank" rel="noopener">Watch Options</a>
- </div>`;
- list.appendChild(card);
- });
+const {data,error}=await db.from("movies")
+.select("*").order("created_at",{ascending:false});
+
+if(error){
+box.textContent="Unable to load movies.";
+return;
+}
+
+renderMovies(data||[]);
+}
+
+function renderMovies(data){
+const q=$("search").value.toLowerCase();
+const box=$("movieList");
+box.innerHTML="";
+
+const filtered=data.filter(m=>
+`${m.title||""} ${m.category||""} ${m.description||""}`
+.toLowerCase().includes(q)
+);
+
+if(!filtered.length){
+box.textContent="No movies found.";
+return;
+}
+
+filtered.forEach(m=>{
+const card=document.createElement("div");
+card.className="movie";
+
+const poster=validUrl(m.poster_url||"")
+?m.poster_url
+:"https://placehold.co/400x600/252535/ffffff?text=MovieHub";
+
+const watch=validUrl(m.watch_url||"")
+?`<a class="watch" href="${safe(m.watch_url)}" target="_blank" rel="noopener">Watch Options</a>`
+:"<p>Viewing link unavailable</p>";
+
+card.innerHTML=`
+<img src="${safe(poster)}" alt="${safe(m.title)}">
+<div class="info">
+<h3>${safe(m.title)}</h3>
+<p>${safe(m.category)} • ${safe(m.release_year)}</p>
+<p>${safe(m.description)}</p>
+${watch}
+</div>`;
+
+box.appendChild(card);
+});
+}
+
+async function isAdmin(userId){
+const {data,error}=await db.from("admins")
+.select("user_id")
+.eq("user_id",userId)
+.maybeSingle();
+
+return !error && !!data;
 }
 
 async function login(){
- const email=document.getElementById("email").value;
- const password=document.getElementById("password").value;
- const msg=document.getElementById("loginMsg");
- msg.textContent="Checking account...";
+$("loginBtn").disabled=true;
+$("loginStatus").textContent="Checking...";
 
- const {data,error}=await db.auth.signInWithPassword({email,password});
- if(error){msg.textContent=error.message;return;}
+const {data,error}=await db.auth.signInWithPassword({
+email:$("email").value.trim(),
+password:$("password").value
+});
 
- const {data:admin,error:checkError}=await db
- .from("admins").select("user_id")
- .eq("user_id",data.user.id).maybeSingle();
+$("loginBtn").disabled=false;
 
- if(checkError || !admin){
- await db.auth.signOut();
- msg.textContent="You are not an authorized admin.";
- return;
- }
+if(error){
+$("loginStatus").textContent=error.message;
+return;
+}
 
- adminUser=data.user;
- document.getElementById("login").classList.add("hidden");
- document.getElementById("dashboard").classList.remove("hidden");
- loadManage();
+if(!await isAdmin(data.user.id)){
+await db.auth.signOut();
+$("loginStatus").textContent="Unauthorized account!";
+return;
+}
+
+$("loginPanel").classList.add("hidden");
+$("dashboard").classList.remove("hidden");
+await loadManage();
 }
 
 async function saveMovie(){
- const title=document.getElementById("title").value.trim();
- if(!title){document.getElementById("msg").textContent="Movie name is required.";return;}
+const title=$("title").value.trim();
+const poster=$("poster").value.trim();
+const watch=$("watchUrl").value.trim();
 
- const movie={
- title,
- poster_url:document.getElementById("poster").value.trim(),
- description:document.getElementById("description").value.trim(),
- category:document.getElementById("category").value.trim(),
- release_year:Number(document.getElementById("year").value)||null,
- watch_url:document.getElementById("link").value.trim()
- };
+if(!title){
+$("saveStatus").textContent="Movie name required.";
+return;
+}
 
- let result;
- if(editingId){
- result=await db.from("movies").update(movie).eq("id",editingId);
- }else{
- result=await db.from("movies").insert(movie);
- }
+if(poster && !validUrl(poster)){
+$("saveStatus").textContent="Invalid poster URL.";
+return;
+}
 
- document.getElementById("msg").textContent=
- result.error ? result.error.message : "Movie saved successfully!";
+if(watch && !validUrl(watch)){
+$("saveStatus").textContent="Invalid watch URL.";
+return;
+}
 
- if(!result.error){
- clearForm();
- loadManage();
- showMovies();
- }
+const movie={
+title:title,
+poster_url:poster||null,
+description:$("description").value.trim()||null,
+category:$("category").value.trim()||null,
+release_year:$("year").value?Number($("year").value):null,
+watch_url:watch||null
+};
+
+const result=editingId
+?await db.from("movies").update(movie).eq("id",editingId)
+:await db.from("movies").insert(movie);
+
+if(result.error){
+$("saveStatus").textContent=result.error.message;
+return;
+}
+
+$("saveStatus").textContent="Movie saved successfully!";
+clearForm();
+await loadManage();
+await loadMovies();
 }
 
 async function loadManage(){
- const {data,error}=await db.from("movies").select("*").order("created_at",{ascending:false});
- const box=document.getElementById("manage");
- if(error){box.textContent=error.message;return;}
- box.innerHTML="";
+const {data,error}=await db.from("movies")
+.select("id,title").order("created_at",{ascending:false});
 
- (data||[]).forEach(m=>{
- const div=document.createElement("div");
- div.className="panel";
- div.innerHTML=`<b>${safe(m.title)}</b><br>
- <button onclick="editMovie(${m.id})">Edit</button>
- <button onclick="deleteMovie(${m.id})">Delete</button>`;
- box.appendChild(div);
- });
+const box=$("manageList");
+box.innerHTML="";
+
+if(error){
+box.textContent=error.message;
+return;
+}
+
+if(!data.length){
+box.textContent="No movies added yet.";
+return;
+}
+
+data.forEach(m=>{
+const div=document.createElement("div");
+div.className="panel";
+const name=document.createElement("b");
+name.textContent=m.title;
+
+const edit=document.createElement("button");
+edit.textContent="Edit";
+edit.className="secondary";
+edit.onclick=()=>editMovie(m.id);
+
+const del=document.createElement("button");
+del.textContent="Delete";
+del.className="danger";
+del.onclick=()=>deleteMovie(m.id);
+
+div.append(name,document.createElement("br"),edit,del);
+box.appendChild(div);
+});
 }
 
 async function editMovie(id){
- const {data,error}=await db.from("movies").select("*").eq("id",id).single();
- if(error)return alert(error.message);
- editingId=id;
- document.getElementById("formTitle").textContent="Edit Movie";
- document.getElementById("title").value=data.title||"";
- document.getElementById("poster").value=data.poster_url||"";
- document.getElementById("description").value=data.description||"";
- document.getElementById("category").value=data.category||"";
- document.getElementById("year").value=data.release_year||"";
- document.getElementById("link").value=data.watch_url||"";
- window.scrollTo(0,0);
+const {data,error}=await db.from("movies")
+.select("*").eq("id",id).single();
+
+if(error)return alert(error.message);
+
+editingId=id;
+$("formHeading").textContent="Edit Movie";
+$("title").value=data.title||"";
+$("poster").value=data.poster_url||"";
+$("description").value=data.description||"";
+$("category").value=data.category||"";
+$("year").value=data.release_year||"";
+$("watchUrl").value=data.watch_url||"";
+window.scrollTo(0,0);
 }
 
 async function deleteMovie(id){
- if(!confirm("Delete this movie?"))return;
- const {error}=await db.from("movies").delete().eq("id",id);
- if(error)alert(error.message);
- else{loadManage();showMovies();}
+if(!confirm("Delete this movie?"))return;
+
+const {error}=await db.from("movies").delete().eq("id",id);
+
+if(error)return alert(error.message);
+
+await loadManage();
+await loadMovies();
 }
 
 function clearForm(){
- editingId=null;
- document.getElementById("formTitle").textContent="Add New Movie";
- ["title","poster","description","category","year","link","msg"].forEach(id=>{
- document.getElementById(id).value="";
- });
+editingId=null;
+$("formHeading").textContent="Add New Movie";
+["title","poster","description","category","year","watchUrl"]
+.forEach(id=>$(id).value="");
 }
 
 async function logout(){
- await db.auth.signOut();
- adminUser=null;
- document.getElementById("dashboard").classList.add("hidden");
- document.getElementById("login").classList.remove("hidden");
+await db.auth.signOut();
+$("dashboard").classList.add("hidden");
+$("loginPanel").classList.remove("hidden");
+$("password").value="";
 }
 
 async function start(){
- if(location.search!=="?admin=1"){
- await showMovies();
- return;
- }
- document.getElementById("home").classList.add("hidden");
- document.getElementById("admin").classList.remove("hidden");
-
- const {data}=await db.auth.getUser();
- if(data.user){
- const {data:admin}=await db.from("admins")
- .select("user_id").eq("user_id",data.user.id).maybeSingle();
- if(admin){
- adminUser=data.user;
- document.getElementById("login").classList.add("hidden");
- document.getElementById("dashboard").classList.remove("hidden");
- loadManage();
- }
- }
+if(location.search!=="?admin=1"){
+await loadMovies();
+return;
 }
+
+$("home").classList.add("hidden");
+$("admin").classList.remove("hidden");
+
+const {data}=await db.auth.getUser();
+
+if(data.user && await isAdmin(data.user.id)){
+$("loginPanel").classList.add("hidden");
+$("dashboard").classList.remove("hidden");
+await loadManage();
+}else if(data.user){
+await db.auth.signOut();
+}
+}
+
+$("search").addEventListener("input",loadMovies);
+$("loginBtn").addEventListener("click",login);
+$("saveBtn").addEventListener("click",saveMovie);
+$("clearBtn").addEventListener("click",clearForm);
+$("logoutBtn").addEventListener("click",logout);
 
 start();
 </script>
