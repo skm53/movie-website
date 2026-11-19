@@ -3,53 +3,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MovieHub</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101116;color:#fff;font-family:Arial,sans-serif}
+body{margin:0;background:#101116;color:white;font-family:Arial,sans-serif}
 .hidden{display:none!important}
-header{padding:18px 20px;background:#191b26;border-bottom:1px solid #333;position:sticky;top:0;z-index:5}
-.logo{font-size:30px;font-weight:bold;color:#ffb52e}
-.hero{padding:38px 25px;background:linear-gradient(120deg,#392342,#171b2b)}
-.hero h1{font-size:34px;margin:5px 0 12px}
-.hero p{font-size:18px;color:#ccc;margin:0}
-section{padding:22px 20px}
-h2{color:#ffb52e;font-size:25px;margin:8px 0 22px}
-input,textarea,select{
-width:100%;padding:14px;margin:8px 0;background:#242633;
-border:1px solid #45495b;border-radius:10px;color:white;font-size:16px
-}
+header{background:#191b26;padding:17px 20px;position:sticky;top:0;z-index:5;border-bottom:1px solid #333}
+.logo{font-size:30px;color:#ffb52e;font-weight:bold}
+section{padding:18px}
+h2{color:#ffb52e;font-size:23px;margin:10px 0 18px}
+.search-area{padding:14px 18px 5px}
+input,textarea,select{width:100%;padding:14px;margin:8px 0;background:#242633;border:1px solid #45495b;border-radius:10px;color:white;font-size:15px}
 textarea{min-height:90px}
-button{border:0;border-radius:9px;padding:12px 17px;font-size:15px;font-weight:bold;cursor:pointer}
+button{padding:12px 16px;border:0;border-radius:9px;font-weight:bold;font-size:14px;cursor:pointer}
 .primary{background:#ffb52e;color:#171717}
 .green{background:#17b978;color:white}
 .red{background:#dc4141;color:white}
-.gray{background:#343746;color:white}
-button:disabled{opacity:.5}
-.search{margin:10px 0 25px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
-.movie{background:#20222e;border-radius:12px;overflow:hidden;border:1px solid #343746;cursor:pointer}
-.movie img{width:100%;height:220px;object-fit:cover;background:#292b35}
-.movie-info{padding:11px}
-.movie-info h3{font-size:16px;margin:3px 0 8px}
-.movie-info p{font-size:13px;color:#aaa;margin:0}
-.categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-.category{padding:25px 10px;text-align:center;border-radius:15px;background:linear-gradient(140deg,#332340,#202536);border:1px solid #76509b;cursor:pointer}
-.category strong{display:block;font-size:18px;margin-top:10px}
-.category span{font-size:30px}
-.empty{text-align:center;color:#aaa;padding:25px}
-.panel{max-width:600px;margin:25px auto;padding:20px;background:#20222e;border-radius:14px}
-.panel h2{margin-top:0}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.gray{background:#414453;color:white}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.movie{background:#20222e;border:1px solid #343746;border-radius:11px;overflow:hidden;cursor:pointer;min-width:0}
+.movie img{width:100%;height:145px;object-fit:cover;display:block;background:#292b35}
+.movie-info{padding:7px}
+.movie-info h3{font-size:12px;line-height:1.35;margin:2px 0 6px;overflow-wrap:anywhere}
+.movie-info p{font-size:10px;color:#aaa;margin:0}
+.empty{color:#aaa;text-align:center;padding:25px;grid-column:1/-1}
+.categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.category{padding:20px 8px;text-align:center;border-radius:14px;background:linear-gradient(140deg,#392346,#202536);border:1px solid #76509b;cursor:pointer}
+.category span{font-size:29px}
+.category strong{display:block;font-size:15px;margin-top:9px}
+.category p{font-size:12px;color:#c2b3d0;margin:7px 0 0}
+.panel{max-width:600px;margin:20px auto;background:#20222e;padding:18px;border-radius:14px}
 .admin-row{padding:13px;background:#292c39;border-radius:10px;margin:10px 0}
-.admin-row h3{margin:0 0 8px}
-.modal{position:fixed;inset:0;background:#000d;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px}
-.modal-box{background:#20222e;padding:20px;border-radius:15px;width:100%;max-width:430px;max-height:90vh;overflow:auto}
+.admin-row h3{margin:0 0 8px;font-size:16px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:#000d;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#20222e;padding:18px;border-radius:14px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
 .modal-box img{width:100%;max-height:300px;object-fit:contain}
-footer{text-align:center;color:#888;padding:30px}
-@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.movie img{height:260px}.categories{grid-template-columns:repeat(3,minmax(0,1fr))}}
+footer{text-align:center;padding:25px;color:#888}
+@media(min-width:650px){
+ .grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+ .movie img{height:230px}
+ .movie-info h3{font-size:15px}
+ .movie-info p{font-size:12px}
+ .categories{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -58,38 +57,45 @@ footer{text-align:center;color:#888;padding:30px}
  <div class="logo">🎬 MOVIEHUB</div>
 </header>
 
-<!-- PUBLIC HOME -->
+<!-- PUBLIC WEBSITE -->
 <main id="home">
- <div class="hero">
-  <h1>Discover Your Movies</h1>
-  <p>Explore your favourite movies and series.</p>
+ <div class="search-area">
+  <input id="search" placeholder="🔍 Search movie or series...">
  </div>
 
  <section>
   <h2>🆕 LATEST UPLOADED</h2>
-  <div id="latest" class="grid"><div class="empty">Loading movies...</div></div>
- </section>
-
- <section>
-  <input id="search" class="search" placeholder="🔍 Search movie or series...">
-  <h2>🎬 ALL MOVIES</h2>
-  <div id="allMovies" class="grid"><div class="empty">Loading...</div></div>
+  <div id="latest" class="grid">
+   <div class="empty">Loading movies...</div>
+  </div>
  </section>
 
  <section>
   <h2>📂 MOVIE CATEGORIES</h2>
   <div class="categories">
-   <div class="category" data-category="All"><span>🎬</span><strong>ALL MOVIES</strong><p>Complete Collection</p></div>
-   <div class="category" data-category="Bengali"><span>🎥</span><strong>BENGALI</strong><p>Bengali Movies</p></div>
-   <div class="category" data-category="Bollywood"><span>🎞️</span><strong>BOLLYWOOD</strong><p>Hindi Movies</p></div>
-   <div class="category" data-category="Hollywood"><span>🍿</span><strong>HOLLYWOOD</strong><p>English Movies</p></div>
-   <div class="category" data-category="South"><span>🎭</span><strong>SOUTH</strong><p>South Indian Movies</p></div>
-   <div class="category" data-category="Web Series"><span>📺</span><strong>WEB SERIES</strong><p>Web Series</p></div>
+   <div class="category" data-category="All">
+    <span>🎬</span><strong>ALL MOVIES</strong><p>Complete Collection</p>
+   </div>
+   <div class="category" data-category="Bengali">
+    <span>🎥</span><strong>BENGALI</strong><p>Bengali Movies</p>
+   </div>
+   <div class="category" data-category="Bollywood">
+    <span>🎞️</span><strong>BOLLYWOOD</strong><p>Hindi Movies</p>
+   </div>
+   <div class="category" data-category="Hollywood">
+    <span>🍿</span><strong>HOLLYWOOD</strong><p>English Movies</p>
+   </div>
+   <div class="category" data-category="South">
+    <span>🎭</span><strong>SOUTH</strong><p>South Indian Movies</p>
+   </div>
+   <div class="category" data-category="Web Series">
+    <span>📺</span><strong>WEB SERIES</strong><p>Web Series</p>
+   </div>
   </div>
  </section>
 </main>
 
-<!-- ADMIN PAGE -->
+<!-- ADMIN WEBSITE -->
 <main id="admin" class="hidden">
  <section>
   <div class="panel">
@@ -100,7 +106,7 @@ footer{text-align:center;color:#888;padding:30px}
     <input id="email" type="email" placeholder="Admin email">
     <input id="password" type="password" placeholder="Password">
     <button id="loginBtn" class="primary">LOGIN</button>
-    <p id="loginStatus" style="color:#ffb52e"></p>
+    <p id="loginStatus"></p>
    </div>
 
    <div id="dashboard" class="hidden">
@@ -123,7 +129,7 @@ footer{text-align:center;color:#888;padding:30px}
     <p id="saveStatus"></p>
 
     <hr style="border-color:#444;margin:25px 0">
-    <h2>📚 Manage Movies</h2>
+    <h2>📚 MANAGE MOVIES</h2>
     <div id="manageList">Loading...</div>
     <button id="logoutBtn" class="red">LOG OUT</button>
    </div>
@@ -134,7 +140,7 @@ footer{text-align:center;color:#888;padding:30px}
 <!-- MOVIE DETAILS -->
 <div id="movieModal" class="modal hidden">
  <div class="modal-box">
-  <button id="closeModal" class="gray" style="float:right">✕</button>
+  <button id="closeModal" class="gray">✕ CLOSE</button>
   <div id="movieDetails"></div>
  </div>
 </div>
@@ -142,30 +148,24 @@ footer{text-align:center;color:#888;padding:30px}
 <footer>MovieHub © 2026</footer>
 
 <script>
-const SUPABASE_URL = "https://dpoukmguisrnjeppunip.supabase.co";
-const SUPABASE_KEY = "sb_publishable_wWaDBcJIp9UfyJxEreo1lg_ZBKj4tPL";
+const SUPABASE_URL="https://dpoukmguisrnjeppunip.supabase.co";
+const SUPABASE_KEY="sb_publishable_wWaDBcJIp9UfyJxEreo1lg_ZBKj4tPL";
 
-const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const $ = id => document.getElementById(id);
-
-let movies = [];
-let selectedCategory = "All";
+const $=id=>document.getElementById(id);
+let movies=[];
+let selectedCategory="All";
 
 function safe(value){
- return String(value ?? "").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ return String(value??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
  }[c]));
 }
 
-function showMessage(id,message,color="#ffb52e"){
- $(id).textContent=message;
- $(id).style.color=color;
-}
-
 function isAdminURL(){
- const params = new URLSearchParams(window.location.search);
- return params.get("admin")==="1" || window.location.href.includes("admin=1");
+ const params=new URLSearchParams(window.location.search);
+ return params.get("admin")==="1";
 }
 
 function showPage(){
@@ -174,17 +174,20 @@ function showPage(){
  $("admin").classList.toggle("hidden",!adminMode);
 }
 
+function showMessage(id,message,color="#ffb52e"){
+ $(id).textContent=message;
+ $(id).style.color=color;
+}
+
 async function loadMovies(){
  $("latest").innerHTML='<div class="empty">Loading movies...</div>';
- $("allMovies").innerHTML='<div class="empty">Loading...</div>';
 
  const {data,error}=await db.from("movies")
   .select("*")
   .order("created_at",{ascending:false});
 
  if(error){
-  $("latest").innerHTML='<div class="empty">Could not load movies.</div>';
-  $("allMovies").innerHTML='<div class="empty">Database error: '+safe(error.message)+'</div>';
+  $("latest").innerHTML='<div class="empty">Database error: '+safe(error.message)+'</div>';
   return;
  }
 
@@ -195,32 +198,29 @@ async function loadMovies(){
 function movieCard(m){
  return `
  <div class="movie" data-id="${Number(m.id)}">
-  <img src="${safe(m.poster_url||"")}" alt="${safe(m.title)}"
-   onerror="this.style.display='none'">
+  <img src="${safe(m.poster_url||"")}" alt="${safe(m.title)}" onerror="this.style.display='none'">
   <div class="movie-info">
    <h3>${safe(m.title)}</h3>
-   <p>${safe(m.category)} ${m.release_year?" • "+safe(m.release_year):""}</p>
+   <p>${safe(m.category)}${m.release_year?" • "+safe(m.release_year):""}</p>
   </div>
  </div>`;
 }
 
 function renderMovies(){
- const latest=movies.slice(0,6);
- $("latest").innerHTML=latest.length
-  ?latest.map(movieCard).join("")
-  :'<div class="empty">No movies uploaded yet.</div>';
-
  const term=$("search").value.trim().toLowerCase();
- let filtered=movies.filter(m=>{
-  const matchesCategory=selectedCategory==="All"||m.category===selectedCategory;
-  const matchesSearch=!term||
+
+ const filtered=movies.filter(m=>{
+  const categoryMatch=selectedCategory==="All"||m.category===selectedCategory;
+  const searchMatch=!term||
    (m.title||"").toLowerCase().includes(term)||
    (m.description||"").toLowerCase().includes(term);
-  return matchesCategory&&matchesSearch;
+  return categoryMatch&&searchMatch;
  });
 
- $("allMovies").innerHTML=filtered.length
-  ?filtered.map(movieCard).join("")
+ const latest=filtered.slice(0,12);
+
+ $("latest").innerHTML=latest.length
+  ?latest.map(movieCard).join("")
   :'<div class="empty">No movies found.</div>';
 }
 
@@ -246,37 +246,15 @@ async function isAdmin(userId){
   .maybeSingle();
 
  if(error){
-  console.error("Admin check error:",error);
+  console.error(error);
   return false;
  }
  return !!data;
 }
 
-async function loadManage(){
- const {data,error}=await db.from("movies")
-  .select("*")
-  .order("created_at",{ascending:false});
-
- if(error){
-  $("manageList").textContent="Error: "+error.message;
-  return;
- }
-
- $("manageList").innerHTML=(data||[]).length
-  ?data.map(m=>`
-   <div class="admin-row">
-    <h3>${safe(m.title)}</h3>
-    <p>${safe(m.category)} • ${safe(m.release_year||"")}</p>
-    <div class="actions">
-     <button class="primary" data-edit="${Number(m.id)}">EDIT</button>
-     <button class="red" data-delete="${Number(m.id)}">DELETE</button>
-    </div>
-   </div>`).join("")
-  :"<p>No movies added yet.</p>";
-}
-
 async function checkLogin(){
  const {data,error}=await db.auth.getUser();
+
  if(error||!data.user){
   $("loginPanel").classList.remove("hidden");
   $("dashboard").classList.add("hidden");
@@ -284,6 +262,7 @@ async function checkLogin(){
  }
 
  const allowed=await isAdmin(data.user.id);
+
  if(!allowed){
   await db.auth.signOut();
   $("loginPanel").classList.remove("hidden");
@@ -318,6 +297,7 @@ async function login(){
  }
 
  const allowed=await isAdmin(data.user.id);
+
  if(!allowed){
   await db.auth.signOut();
   showMessage("loginStatus","This account is not registered as admin.","#ff5555");
@@ -326,7 +306,6 @@ async function login(){
 
  $("loginPanel").classList.add("hidden");
  $("dashboard").classList.remove("hidden");
- showMessage("loginStatus","");
  await loadManage();
 }
 
@@ -352,7 +331,7 @@ async function saveMovie(){
  }
 
  const movie={
-  title,
+  title:title,
   description:$("description").value.trim(),
   poster_url:$("poster").value.trim(),
   category:$("category").value,
@@ -377,10 +356,33 @@ async function saveMovie(){
   return;
  }
 
- showMessage("saveStatus",id?"Movie updated successfully!":"Movie added successfully!","#25d58b");
+ showMessage("saveStatus",id?"Movie updated!":"Movie added!","#25d58b");
  clearForm();
  await loadManage();
  await loadMovies();
+}
+
+async function loadManage(){
+ const {data,error}=await db.from("movies")
+  .select("*")
+  .order("created_at",{ascending:false});
+
+ if(error){
+  $("manageList").textContent="Error: "+error.message;
+  return;
+ }
+
+ $("manageList").innerHTML=(data||[]).length
+  ?data.map(m=>`
+   <div class="admin-row">
+    <h3>${safe(m.title)}</h3>
+    <p>${safe(m.category)} • ${safe(m.release_year||"")}</p>
+    <div class="actions">
+     <button class="primary" data-edit="${Number(m.id)}">EDIT</button>
+     <button class="red" data-delete="${Number(m.id)}">DELETE</button>
+    </div>
+   </div>`).join("")
+  :"<p>No movies added yet.</p>";
 }
 
 function editMovie(id){
@@ -402,10 +404,12 @@ async function deleteMovie(id){
  if(!confirm("Are you sure you want to delete this movie?"))return;
 
  const {error}=await db.from("movies").delete().eq("id",Number(id));
+
  if(error){
   alert("Delete failed: "+error.message);
   return;
  }
+
  await loadManage();
  await loadMovies();
 }
@@ -437,7 +441,7 @@ document.addEventListener("click",e=>{
   selectedCategory=category.dataset.category;
   $("search").value="";
   renderMovies();
-  $("allMovies").scrollIntoView({behavior:"smooth"});
+  $("latest").scrollIntoView({behavior:"smooth"});
  }
 
  const edit=e.target.closest("[data-edit]");
