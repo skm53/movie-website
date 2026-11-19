@@ -3,100 +3,251 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MovieHub - Discover Movies</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MovieHub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101116;color:white;font-family:Arial,sans-serif}
-header{background:#191a22;padding:18px 15px;position:sticky;top:0;z-index:5}
+body{margin:0;background:#101116;color:white;font-family:Arial}
+header{background:#1c1d26;padding:18px;position:sticky;top:0}
 .logo{font-size:25px;font-weight:bold;color:#ffb52e}
-nav{display:flex;gap:18px;margin-top:15px;overflow:auto}
-nav a{color:#ddd;text-decoration:none;white-space:nowrap}
-.hero{padding:35px 18px;background:linear-gradient(120deg,#292333,#101116)}
+.hero{padding:30px 18px;background:linear-gradient(120deg,#373044,#101116)}
 .hero h1{font-size:29px}
-.hero p{color:#bbb;line-height:1.5}
+input,textarea,select{width:100%;padding:13px;margin:7px 0;background:#252631;color:white;border:1px solid #555;border-radius:7px}
+button{padding:12px 18px;background:#ffb52e;color:#111;border:0;border-radius:7px;font-weight:bold;margin:5px;cursor:pointer}
 .search{padding:15px}
-input{width:100%;padding:14px;border:1px solid #444;border-radius:9px;background:#20212a;color:white;font-size:16px}
-h2{padding:0 15px}
-.movies{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;padding:15px}
-.movie{background:#1d1e26;border-radius:10px;overflow:hidden}
-.movie img{width:100%;height:210px;object-fit:cover;background:#333}
+.movies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:13px}
+.movie{background:#20212a;border-radius:10px;overflow:hidden}
+.movie img{width:100%;height:210px;object-fit:cover}
 .info{padding:10px}
-.info h3{margin:5px 0;font-size:16px}
-.info p{font-size:12px;color:#aaa}
-.info a{display:block;background:#ffad27;color:#171717;text-align:center;padding:10px;border-radius:6px;text-decoration:none;font-weight:bold}
-footer{text-align:center;padding:25px;color:#888}
+.info h3{margin:5px 0}
+.info p{font-size:13px;color:#bbb}
+.info a{display:block;text-align:center;background:#ffb52e;color:#111;padding:10px;text-decoration:none;border-radius:6px}
+#admin{padding:18px}
+.panel{background:#20212a;padding:15px;border-radius:10px;margin:12px 0}
+.hidden{display:none}
+.small{font-size:12px;color:#aaa}
+footer{text-align:center;color:#999;padding:25px}
 </style>
 </head>
 <body>
-<header>
-<div class="logo">🎬 MOVIEHUB</div>
-<nav>
-<a href="#">Home</a>
-<a href="#movies">Movies</a>
-<a href="#about">About</a>
-</nav>
-</header>
 
+<header><div class="logo">🎬 MOVIEHUB</div></header>
+
+<main id="home">
 <section class="hero">
-<h1>Discover Your Next Movie</h1>
-<p>Explore movies, discover stories and find official streaming options.</p>
+<h1>Discover Movies</h1>
+<p>Explore your favourite movies.</p>
 </section>
-
 <div class="search">
-<input id="search" type="text" placeholder="🔍 Search movies..." oninput="filterMovies()">
+<input id="search" placeholder="🔍 Search movies..." oninput="showMovies()">
+</div>
+<h2 style="padding-left:15px">Latest Movies</h2>
+<div class="movies" id="movieList"></div>
+<footer>© 2026 MovieHub</footer>
+</main>
+
+<section id="admin" class="hidden">
+<h2>🔐 Admin Login</h2>
+<div class="panel" id="login">
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p id="loginMsg" class="small"></p>
 </div>
 
-<h2 id="movies">Latest Movies</h2>
-<div class="movies" id="movieList">
-<div class="movie">
-<img src="https://placehold.co/400x600/252535/ffffff?text=Movie+One" alt="Movie One">
-<div class="info">
-<h3>Movie One</h3>
-<p>Action • 2026</p>
-<a href="https://www.youtube.com/" target="_blank">Watch Options</a>
+<div id="dashboard" class="hidden">
+<h2>Admin Dashboard</h2>
+<div class="panel">
+<h3 id="formTitle">Add New Movie</h3>
+<input id="title" placeholder="Movie Name">
+<input id="poster" placeholder="Poster Image URL">
+<textarea id="description" placeholder="Movie Description"></textarea>
+<input id="category" placeholder="Category (Action, Drama...)">
+<input id="year" type="number" placeholder="Release Year">
+<input id="link" placeholder="Official Watch / Download URL">
+<button onclick="saveMovie()">Save Movie</button>
+<button onclick="clearForm()">Clear</button>
+<p id="msg" class="small"></p>
 </div>
+<h3>Manage Movies</h3>
+<div id="manage"></div>
+<button onclick="logout()">Logout</button>
 </div>
-<div class="movie">
-<img src="https://placehold.co/400x600/352525/ffffff?text=Movie+Two" alt="Movie Two">
-<div class="info">
-<h3>Movie Two</h3>
-<p>Drama • 2026</p>
-<a href="https://www.youtube.com/" target="_blank">Watch Options</a>
-</div>
-</div>
-<div class="movie">
-<img src="https://placehold.co/400x600/253535/ffffff?text=Movie+Three" alt="Movie Three">
-<div class="info">
-<h3>Movie Three</h3>
-<p>Comedy • 2025</p>
-<a href="https://www.youtube.com/" target="_blank">Watch Options</a>
-</div>
-</div>
-<div class="movie">
-<img src="https://placehold.co/400x600/353025/ffffff?text=Movie+Four" alt="Movie Four">
-<div class="info">
-<h3>Movie Four</h3>
-<p>Thriller • 2025</p>
-<a href="https://www.youtube.com/" target="_blank">Watch Options</a>
-</div>
-</div>
-</div>
-
-<section id="about" style="padding:20px">
-<h2>About MovieHub</h2>
-<p style="color:#aaa">Your destination to discover movies and find legal viewing options.</p>
 </section>
-
-<footer>© 2026 MovieHub. All rights reserved.</footer>
 
 <script>
-function filterMovies(){
- const q=document.getElementById('search').value.toLowerCase();
- document.querySelectorAll('.movie').forEach(movie=>{
- movie.style.display=movie.innerText.toLowerCase().includes(q)?"block":"none";
+const SUPABASE_URL = "YOUR_PROJECT_URL";
+const SUPABASE_KEY = "YOUR_PUBLISHABLE_KEY";
+
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+let editingId = null;
+let adminUser = null;
+
+function safe(value){
+ return String(value || "").replace(/[&<>"']/g,
+ c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function showMovies(){
+ const q=document.getElementById("search").value.toLowerCase();
+ const {data,error}=await db.from("movies")
+ .select("*").order("created_at",{ascending:false});
+
+ const list=document.getElementById("movieList");
+ if(error){list.textContent="Could not load movies.";return;}
+ list.innerHTML="";
+
+ (data||[]).filter(m=>
+ (m.title+" "+(m.category||"")).toLowerCase().includes(q)
+ ).forEach(m=>{
+ const card=document.createElement("div");
+ card.className="movie";
+ card.innerHTML=`
+ <img src="${safe(m.poster_url)}" alt="${safe(m.title)}">
+ <div class="info">
+ <h3>${safe(m.title)}</h3>
+ <p>${safe(m.category)} • ${safe(m.release_year)}</p>
+ <p>${safe(m.description)}</p>
+ <a href="${safe(m.watch_url)}" target="_blank" rel="noopener">Watch Options</a>
+ </div>`;
+ list.appendChild(card);
  });
 }
+
+async function login(){
+ const email=document.getElementById("email").value;
+ const password=document.getElementById("password").value;
+ const msg=document.getElementById("loginMsg");
+ msg.textContent="Checking account...";
+
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){msg.textContent=error.message;return;}
+
+ const {data:admin,error:checkError}=await db
+ .from("admins").select("user_id")
+ .eq("user_id",data.user.id).maybeSingle();
+
+ if(checkError || !admin){
+ await db.auth.signOut();
+ msg.textContent="You are not an authorized admin.";
+ return;
+ }
+
+ adminUser=data.user;
+ document.getElementById("login").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+ loadManage();
+}
+
+async function saveMovie(){
+ const title=document.getElementById("title").value.trim();
+ if(!title){document.getElementById("msg").textContent="Movie name is required.";return;}
+
+ const movie={
+ title,
+ poster_url:document.getElementById("poster").value.trim(),
+ description:document.getElementById("description").value.trim(),
+ category:document.getElementById("category").value.trim(),
+ release_year:Number(document.getElementById("year").value)||null,
+ watch_url:document.getElementById("link").value.trim()
+ };
+
+ let result;
+ if(editingId){
+ result=await db.from("movies").update(movie).eq("id",editingId);
+ }else{
+ result=await db.from("movies").insert(movie);
+ }
+
+ document.getElementById("msg").textContent=
+ result.error ? result.error.message : "Movie saved successfully!";
+
+ if(!result.error){
+ clearForm();
+ loadManage();
+ showMovies();
+ }
+}
+
+async function loadManage(){
+ const {data,error}=await db.from("movies").select("*").order("created_at",{ascending:false});
+ const box=document.getElementById("manage");
+ if(error){box.textContent=error.message;return;}
+ box.innerHTML="";
+
+ (data||[]).forEach(m=>{
+ const div=document.createElement("div");
+ div.className="panel";
+ div.innerHTML=`<b>${safe(m.title)}</b><br>
+ <button onclick="editMovie(${m.id})">Edit</button>
+ <button onclick="deleteMovie(${m.id})">Delete</button>`;
+ box.appendChild(div);
+ });
+}
+
+async function editMovie(id){
+ const {data,error}=await db.from("movies").select("*").eq("id",id).single();
+ if(error)return alert(error.message);
+ editingId=id;
+ document.getElementById("formTitle").textContent="Edit Movie";
+ document.getElementById("title").value=data.title||"";
+ document.getElementById("poster").value=data.poster_url||"";
+ document.getElementById("description").value=data.description||"";
+ document.getElementById("category").value=data.category||"";
+ document.getElementById("year").value=data.release_year||"";
+ document.getElementById("link").value=data.watch_url||"";
+ window.scrollTo(0,0);
+}
+
+async function deleteMovie(id){
+ if(!confirm("Delete this movie?"))return;
+ const {error}=await db.from("movies").delete().eq("id",id);
+ if(error)alert(error.message);
+ else{loadManage();showMovies();}
+}
+
+function clearForm(){
+ editingId=null;
+ document.getElementById("formTitle").textContent="Add New Movie";
+ ["title","poster","description","category","year","link","msg"].forEach(id=>{
+ document.getElementById(id).value="";
+ });
+}
+
+async function logout(){
+ await db.auth.signOut();
+ adminUser=null;
+ document.getElementById("dashboard").classList.add("hidden");
+ document.getElementById("login").classList.remove("hidden");
+}
+
+async function start(){
+ if(location.search!=="?admin=1"){
+ await showMovies();
+ return;
+ }
+ document.getElementById("home").classList.add("hidden");
+ document.getElementById("admin").classList.remove("hidden");
+
+ const {data}=await db.auth.getUser();
+ if(data.user){
+ const {data:admin}=await db.from("admins")
+ .select("user_id").eq("user_id",data.user.id).maybeSingle();
+ if(admin){
+ adminUser=data.user;
+ document.getElementById("login").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+ loadManage();
+ }
+ }
+}
+
+start();
 </script>
 </body>
 </html>
