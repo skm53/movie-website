@@ -11,7 +11,7 @@
 body{margin:0;background:#101116;color:white;font-family:Arial,sans-serif}
 .hidden{display:none!important}
 header{background:#191b26;padding:17px 20px;position:sticky;top:0;z-index:5;border-bottom:1px solid #333}
-.logo{font-size:30px;color:#ffb52e;font-weight:bold}
+.logo{font-size:30px;color:#ffb52e;font-weight:bold;cursor:pointer}
 section{padding:18px}
 h2{color:#ffb52e;font-size:23px;margin:10px 0 18px}
 .search-area{padding:14px 18px 5px}
@@ -41,6 +41,7 @@ button{padding:12px 16px;border:0;border-radius:9px;font-weight:bold;font-size:1
 .modal{position:fixed;inset:0;background:#000d;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-box{background:#20222e;padding:18px;border-radius:14px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
 .modal-box img{width:100%;max-height:300px;object-fit:contain}
+.back-button{margin:5px 0 15px}
 footer{text-align:center;padding:25px;color:#888}
 @media(min-width:650px){
  .grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
@@ -54,10 +55,10 @@ footer{text-align:center;padding:25px;color:#888}
 <body>
 
 <header>
- <div class="logo">🎬 MOVIEHUB</div>
+ <div class="logo" id="logoHome">🎬 MOVIEHUB</div>
 </header>
 
-<!-- PUBLIC WEBSITE -->
+<!-- HOME PAGE -->
 <main id="home">
  <div class="search-area">
   <input id="search" placeholder="🔍 Search movie or series...">
@@ -73,9 +74,6 @@ footer{text-align:center;padding:25px;color:#888}
  <section>
   <h2>📂 MOVIE CATEGORIES</h2>
   <div class="categories">
-   <div class="category" data-category="All">
-    <span>🎬</span><strong>ALL MOVIES</strong><p>Complete Collection</p>
-   </div>
    <div class="category" data-category="Bengali">
     <span>🎥</span><strong>BENGALI</strong><p>Bengali Movies</p>
    </div>
@@ -95,7 +93,21 @@ footer{text-align:center;padding:25px;color:#888}
  </section>
 </main>
 
-<!-- ADMIN WEBSITE -->
+<!-- CATEGORY PAGE -->
+<main id="categoryPage" class="hidden">
+ <section>
+  <button id="backHome" class="gray back-button">← BACK TO HOME</button>
+  <div class="search-area" style="padding:0">
+   <input id="categorySearch" placeholder="🔍 Search in this category...">
+  </div>
+  <h2 id="categoryTitle">MOVIES</h2>
+  <div id="categoryMovies" class="grid">
+   <div class="empty">Loading...</div>
+  </div>
+ </section>
+</main>
+
+<!-- ADMIN PAGE -->
 <main id="admin" class="hidden">
  <section>
   <div class="panel">
@@ -152,10 +164,10 @@ const SUPABASE_URL="https://dpoukmguisrnjeppunip.supabase.co";
 const SUPABASE_KEY="sb_publishable_wWaDBcJIp9UfyJxEreo1lg_ZBKj4tPL";
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
 const $=id=>document.getElementById(id);
+
 let movies=[];
-let selectedCategory="All";
+let selectedCategory="";
 
 function safe(value){
  return String(value??"").replace(/[&<>"']/g,c=>({
@@ -164,19 +176,39 @@ function safe(value){
 }
 
 function isAdminURL(){
- const params=new URLSearchParams(window.location.search);
- return params.get("admin")==="1";
-}
-
-function showPage(){
- const adminMode=isAdminURL();
- $("home").classList.toggle("hidden",adminMode);
- $("admin").classList.toggle("hidden",!adminMode);
+ return new URLSearchParams(window.location.search).get("admin")==="1";
 }
 
 function showMessage(id,message,color="#ffb52e"){
  $(id).textContent=message;
  $(id).style.color=color;
+}
+
+function showHome(){
+ $("home").classList.remove("hidden");
+ $("categoryPage").classList.add("hidden");
+ $("admin").classList.add("hidden");
+ selectedCategory="";
+ $("search").value="";
+ window.scrollTo(0,0);
+ renderHome();
+}
+
+function showCategory(category){
+ selectedCategory=category;
+ $("home").classList.add("hidden");
+ $("categoryPage").classList.remove("hidden");
+ $("admin").classList.add("hidden");
+ $("categorySearch").value="";
+ $("categoryTitle").textContent=category.toUpperCase()+" MOVIES";
+ renderCategory();
+ window.scrollTo(0,0);
+}
+
+function showAdmin(){
+ $("home").classList.add("hidden");
+ $("categoryPage").classList.add("hidden");
+ $("admin").classList.remove("hidden");
 }
 
 async function loadMovies(){
@@ -192,7 +224,8 @@ async function loadMovies(){
  }
 
  movies=data||[];
- renderMovies();
+ renderHome();
+ if(selectedCategory)renderCategory();
 }
 
 function movieCard(m){
@@ -206,22 +239,36 @@ function movieCard(m){
  </div>`;
 }
 
-function renderMovies(){
+function renderHome(){
  const term=$("search").value.trim().toLowerCase();
+ const filtered=movies.filter(m=>
+  !term||
+  (m.title||"").toLowerCase().includes(term)||
+  (m.description||"").toLowerCase().includes(term)
+ );
+ const latest=filtered.slice(0,12);
+
+ $("latest").innerHTML=latest.length
+  ?latest.map(movieCard).join("")
+  :'<div class="empty">No movies found.</div>';
+}
+
+function renderCategory(){
+ if(!selectedCategory)return;
+
+ const term=$("categorySearch").value.trim().toLowerCase();
 
  const filtered=movies.filter(m=>{
-  const categoryMatch=selectedCategory==="All"||m.category===selectedCategory;
+  const categoryMatch=m.category===selectedCategory;
   const searchMatch=!term||
    (m.title||"").toLowerCase().includes(term)||
    (m.description||"").toLowerCase().includes(term);
   return categoryMatch&&searchMatch;
  });
 
- const latest=filtered.slice(0,12);
-
- $("latest").innerHTML=latest.length
-  ?latest.map(movieCard).join("")
-  :'<div class="empty">No movies found.</div>';
+ $("categoryMovies").innerHTML=filtered.length
+  ?filtered.map(movieCard).join("")
+  :'<div class="empty">No movies found in this category.</div>';
 }
 
 function openMovie(id){
@@ -372,8 +419,10 @@ async function loadManage(){
   return;
  }
 
- $("manageList").innerHTML=(data||[]).length
-  ?data.map(m=>`
+ movies=data||[];
+
+ $("manageList").innerHTML=movies.length
+  ?movies.map(m=>`
    <div class="admin-row">
     <h3>${safe(m.title)}</h3>
     <p>${safe(m.category)} • ${safe(m.release_year||"")}</p>
@@ -425,7 +474,10 @@ $("loginBtn").addEventListener("click",login);
 $("saveBtn").addEventListener("click",saveMovie);
 $("clearBtn").addEventListener("click",clearForm);
 $("logoutBtn").addEventListener("click",logout);
-$("search").addEventListener("input",renderMovies);
+$("search").addEventListener("input",renderHome);
+$("categorySearch").addEventListener("input",renderCategory);
+$("backHome").addEventListener("click",showHome);
+$("logoHome").addEventListener("click",showHome);
 $("closeModal").addEventListener("click",()=>$("movieModal").classList.add("hidden"));
 
 $("movieModal").addEventListener("click",e=>{
@@ -434,29 +486,33 @@ $("movieModal").addEventListener("click",e=>{
 
 document.addEventListener("click",e=>{
  const card=e.target.closest(".movie");
- if(card)openMovie(card.dataset.id);
+ if(card){
+  openMovie(card.dataset.id);
+  return;
+ }
 
  const category=e.target.closest(".category");
  if(category){
-  selectedCategory=category.dataset.category;
-  $("search").value="";
-  renderMovies();
-  $("latest").scrollIntoView({behavior:"smooth"});
+  showCategory(category.dataset.category);
+  return;
  }
 
  const edit=e.target.closest("[data-edit]");
- if(edit)editMovie(edit.dataset.edit);
+ if(edit){
+  editMovie(edit.dataset.edit);
+  return;
+ }
 
  const del=e.target.closest("[data-delete]");
  if(del)deleteMovie(del.dataset.delete);
 });
 
 async function start(){
- showPage();
-
  if(isAdminURL()){
+  showAdmin();
   await checkLogin();
  }else{
+  showHome();
   await loadMovies();
  }
 }
