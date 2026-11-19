@@ -337,7 +337,7 @@ $("password").value="";
 }
 
 async function start(){
-if(location.search!=="?admin=1"){
+if(new URLSearchParams(location.search).get("admin")!=="1"){
 await loadMovies();
 return;
 }
